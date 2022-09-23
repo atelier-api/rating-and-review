@@ -1,10 +1,14 @@
-const express = require('express');
-const app = express();
-const port = 3000;
-const reviewRoute = require('./routes/reviewRoute');
+const app = require("./app");
 
-app.use('/reviews', reviewRoute);
+const start = (port) => {
+  try {
+    app.listen(port, () => {
+    console.log(`API running at http://localhost:${port}`);
+    });
+  } catch (err) {
+    console.error(err);
+    process.exit();
+  }
+}
 
-app.listen(port, () => {
-  console.log(`API server listening on port ${port}`)
-});
+start(3000);
