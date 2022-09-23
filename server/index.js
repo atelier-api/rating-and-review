@@ -1,10 +1,9 @@
 const express = require('express');
 const app = express();
 const port = 3000;
-const reviewRoute = require('./Routing/reviewRoute');
+const reviewRoute = require('./routes/reviewRoute');
 
 app.use('/reviews', reviewRoute);
-
 
 app.listen(port, () => {
   console.log(`API server listening on port ${port}`)
