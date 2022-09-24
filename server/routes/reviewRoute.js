@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 
+// Include middleware if needed
+
+// Will designate which controller function for each route
+
 // List Reviews
 router.get('/', (req, res) => {
   res.status(200);
@@ -24,14 +28,14 @@ router.post('/', (req, res) => {
 
 // Mark Review as Helpful
 router.put('/:review_id/helpful', (req, res) => {
-  res.status(200);
+  res.status(204);
   res.send('Helpful review put request hit');
   //parameter: review_id
 });
 
 // Report Review
 router.put('/:review_id/report', (req, res) => {
-  res.status(200);
+  res.status(204);
   res.send('Hit report review');
 });
 

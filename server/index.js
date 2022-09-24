@@ -1,14 +1,12 @@
+require('dotenv').config();
 const app = require("./app");
+const port = process.env.PORT || 3000;
 
-const start = (port) => {
-  try {
-    app.listen(port, () => {
-    console.log(`API running at http://localhost:${port}`);
-    });
-  } catch (err) {
-    console.error(err);
-    process.exit();
-  }
+try {
+  app.listen(port, () => {
+  console.log(`API running at http://localhost:${port}`);
+  });
+} catch (err) {
+  console.error(err);
+  process.exit();
 }
-
-start(3000);

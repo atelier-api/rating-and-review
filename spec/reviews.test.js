@@ -23,12 +23,12 @@ describe("List Reviews", () => {
   test("should mark review as helpful", async () => {
     await request(app)
       .put("/reviews/:review_id/helpful")
-      .expect(200);
+      .expect(204);
   });
 
   test("should report review", async () => {
     await request(app)
       .put("/reviews/:review_id/report")
-      .expect(200);
+      .expect(204);
   });
 });
