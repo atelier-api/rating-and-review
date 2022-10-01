@@ -10,7 +10,7 @@ const reviewController = require('../controllers/reviewController');
 // List Reviews
 router.get('/meta/:id', async (req, res) => {
   const reviews = await reviewController.getReviews(req, res);
-  console.log(reviews);
+  res.send(reviews);
   //parameters: page, count, sort, product_id
 });
 
