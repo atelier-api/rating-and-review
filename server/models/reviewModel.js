@@ -1,5 +1,6 @@
-const db = require('../db');
+const { pool } = require('../db');
 
-exports.getReviews = () => {
-  return 'Hit Model';
+exports.getReviews = async (prodId) => {
+  const test = await pool.query(`SELECT * FROM reviews WHERE product_id = 72071`);
+  console.log(test);
 };
