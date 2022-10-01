@@ -10,7 +10,6 @@ const connectDb = async () => {
       password: process.env.PGPASSWORD,
       port: process.env.PGPORT
     })
-
     await pool.connect();
     console.log(`Connected to database ${process.env.PGDATABASE}`);
     await pool.end();

@@ -1,19 +1,21 @@
 const express = require('express');
 const router = express.Router();
+const reviewController = require('../controllers/reviewController');
+
 
 // Include middleware if needed
 
 // Will designate which controller function for each route
 
 // List Reviews
-router.get('/', (req, res) => {
-  res.status(200);
-  res.send('Reviews Index Hit!');
+router.get('/meta/:id', async (req, res) => {
+  const reviews = await reviewController.getReviews(req, res);
+  console.log(reviews);
   //parameters: page, count, sort, product_id
 });
 
 // Get Review Metadata
-router.get('/meta', (req, res) => {
+router.get('/:id', (req, res) => {
   res.status(200);
   res.send('Metadata Hit');
   // parameters: product_id
