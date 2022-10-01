@@ -1,47 +1,28 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const pool = new Pool({
+const credentials = {
   user: process.env.PGUERS,
   host: process.env.PGHOST,
   database: process.env.PGDATABASE,
   password: process.env.PGPASSWORD,
   port: process.env.PGPORT
-});
+};
+
+const pool = new Pool(credentials);
 
 const connectDb = async () => {
   try {
-    await pool.connect();
+    const poolCheck = new Pool(credentials);
+    await poolCheck.connect();
     console.log(`Connected to database ${process.env.PGDATABASE}`);
-    // await pool.end();
+    await poolCheck.end();
   } catch (error) {
     console.log(error);
   }
 }
 
 module.exports = { pool, connectDb };
-
-
-
-
-// const connectDb = async () => {
-//   try {
-//     const pool = new Pool({
-//       user: process.env.PGUERS,
-//       host: process.env.PGHOST,
-//       database: process.env.PGDATABASE,
-//       password: process.env.PGPASSWORD,
-//       port: process.env.PGPORT
-//     })
-//     await pool.connect();
-//     console.log(`Connected to database ${process.env.PGDATABASE}`);
-//     await pool.end();
-//   } catch (error) {
-//     console.log(error);
-//   }
-// }
-
-// module.exports = connectDb;
 
 
 
