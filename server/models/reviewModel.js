@@ -1,2 +1,5 @@
-// run db specific functions
-// manipulate shape of data
+const db = require('../db');
+
+exports.getReviews = () => {
+  return 'Hit Model';
+};
