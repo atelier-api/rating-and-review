@@ -22,9 +22,11 @@ router.get('/:id', (req, res) => {
 })
 
 // Add a Review
-router.post('/', (req, res) => {
-  res.status(201);
-  res.send('Reviews index post request hit');
+router.post('/', async (req, res) => {
+  const postReview = await reviewController.postReview(req, res);
+  res.send(postReview);
+  // res.status(201);
+  // res.send('Reviews index post request hit');
   // parameters: product_id, rating, summary, body, recommend, name, email, photos, characteristics
 });
 

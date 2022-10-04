@@ -6,19 +6,23 @@ exports.getReviews = async (req, res) => {
   return reviews;
 };
 
-exports.getMetaData = (req, res) => {
-
+exports.getMetaData = async (req, res) => {
+  const metaData = await ReviewModel.getMetaData(req.params.id);
+  return metaData;
 };
 
-exports.postReview = (req, res) => {
-
+exports.postReview = async (req, res) => {
+  const postStatus = await ReviewModel.postReview(req.body);
+  return postStatus;
 };
 
-exports.markHelpful = (req, res) => {
-
+exports.markHelpful = async (req, res) => {
+  const markStatus = await ReviewModel.markHelpful();
+  return markStatus;
 };
 
-exports.reportReview = (req, res) => {
-
+exports.reportReview = async (req, res) => {
+  const reportStatus = await ReviewModel.reportReview();
+  return reportStatus;
 };
 
