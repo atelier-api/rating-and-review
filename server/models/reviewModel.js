@@ -57,17 +57,39 @@ exports.postReview = async (post) => {
   const { product_id, rating, recommend, summary, body, name, email, photos, characteristics } = post;
 
   try {
-  const textReviews = 'INSERT INTO reviews (product_id, rating, recommend, summary, body, reviewer_name, reviewer_email) VALUES ($1, $2, $3, $4, $5, $6, $7)';
-  const reviewsValues = [product_id, rating, recommend, summary, body, name, email];
-  await pool.query(textReviews, reviewsValues);
+    // Begin transaction
+    await pool.query('BEGIN');
 
-  // query recent review to get review id
+    // Failing test statement
+    // INSERT INTO reviews (product_id, rating, recommend, summary, body, reviewer_name, reviewer_email) VALUES (71701, 0, true, 'Test Title', 'Test Body', 'Tester Nickname', 'Tester@gmail.com') RETURNING review_id;
 
-  // need to map it iterate through photos for multiple pictures
-  const textPhotos = 'INSERT INTO photos (url, product_id) VALUES ($1, $2)';
-  const photosValues = []
 
+    // Insert Review
+    const textReviews = 'INSERT INTO reviews (product_id, rating, recommend, summary, body, reviewer_name, reviewer_email) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING review_id';
+    const reviewsValues = [product_id, rating, recommend, summary, body, name, email];
+    // will return review_id
+    const insertReview = await pool.query(textReviews, reviewsValues);
+    console.log('INSERT REVIEW', insertReview);
+
+    // Insert Photos
+    const textPhotos = 'INSERT INTO photos (url, product_id) VALUES ($1, $2) RETURNING id';
+    const insertPhotos = await Promise.all(photos.forEach(async (current) => {
+      const photosValues = [insertReview, current];
+      await pool.query(textPhotos, photosValues);
+    }));
+    // Insert Characteristics
+    const charReviewArr = Object.keys(characteristics);
+    const textCharReview = 'INSERT INTO characteristic_reviews (characteristic_id, review_id, value) VALUES ($1, $2, $3)'
+    const insertCharReview = await Promise.all(charReviewArr.forEach(async (currCharId) => {
+      const charReviewValues = [currCharId, textReviews, characteristics.currCharId];
+      await pool.query(textCharReview, charReviewValues);
+    }));
+
+
+    // End transaction
+    await pool.query('COMMIT');
     await pool.end();
+    return 'Successful Post Request';
   } catch (error) {
     console.error(error);
     return 404;
