@@ -54,9 +54,8 @@ exports.getMetaData = async () => {
 }
 */
 exports.postReview = async (post) => {
-  const { product_id, rating, recommend, summary, body, name, email, photos, characteristics } = post;
-
   try {
+    const { product_id, rating, recommend, summary, body, name, email, photos, characteristics } = post;
     // Begin transaction
     await pool.query('BEGIN');
 
@@ -69,19 +68,27 @@ exports.postReview = async (post) => {
     const reviewsValues = [product_id, rating, recommend, summary, body, name, email];
     // will return review_id
     const insertReview = await pool.query(textReviews, reviewsValues);
-    console.log('INSERT REVIEW', insertReview);
+    console.log('REVIEW ID', insertReview.rows[0].review_id);
 
     // Insert Photos
-    const textPhotos = 'INSERT INTO photos (url, product_id) VALUES ($1, $2) RETURNING id';
-    const insertPhotos = await Promise.all(photos.forEach(async (current) => {
-      const photosValues = [insertReview, current];
+    const photoArr = photos;
+    const textPhotos = 'INSERT INTO photos (url, review_id) VALUES ($1, $2) RETURNING id';
+    const insertPhotos = await Promise.all(photoArr.map(async (current, index) => {
+      const photosValues = [current, insertReview.rows[0].review_id];
       await pool.query(textPhotos, photosValues);
     }));
     // Insert Characteristics
+    console.log('HIT CHARACTERISTICS');
+    const testReviewID = 'SELECT * FROM reviews WHERE review_id = $1';
+    const testValues = [insertReview.rows[0].review_id];
+    // will return review_id
+    const testReview = await pool.query(testReviewID, testValues);
+    console.log('TEST REVIEW', testReview.rows);
+
     const charReviewArr = Object.keys(characteristics);
     const textCharReview = 'INSERT INTO characteristic_reviews (characteristic_id, review_id, value) VALUES ($1, $2, $3)'
-    const insertCharReview = await Promise.all(charReviewArr.forEach(async (currCharId) => {
-      const charReviewValues = [currCharId, textReviews, characteristics.currCharId];
+    const insertCharReview = await Promise.all(charReviewArr.map(async (currCharId) => {
+      const charReviewValues = [Number(currCharId), insertReview.rows[0].review_id, characteristics[currCharId]];
       await pool.query(textCharReview, charReviewValues);
     }));
 
