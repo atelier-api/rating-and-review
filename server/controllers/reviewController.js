@@ -11,14 +11,20 @@ exports.getReviews = async (req, res) => {
 
 exports.getMetaData = async (req, res) => {
   const metaData = await ReviewModel.getMetaData(req.params.id);
-  return metaData;
+  if (metaData !== 500) {
+    res.status(200).send(metaData);
+  } else {
+    res.status(500).send('An error occurred. If this error persists, contact your instruction team.');
+  }
 };
 
 exports.postReview = async (req, res) => {
   const postStatus = await ReviewModel.postReview(req.body);
   if (postStatus === 201) {
     res.status(201).send('CREATED');
-  };
+  } else {
+    res.status(422).send('Error: review body contains invalid entries');
+  }
 };
 
 exports.markHelpful = async (req, res) => {
