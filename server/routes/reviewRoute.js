@@ -16,8 +16,7 @@ router.get('/meta/:id', async (req, res) => {
 // Get Review Metadata
 router.get('/:id', (req, res) => {
   // parameters: product_id
-  res.status(200);
-  res.send('Metadata Hit');
+  reviewController.getMetaData(req, res);
 })
 
 // Add a Review
