@@ -9,38 +9,31 @@ const reviewController = require('../controllers/reviewController');
 
 // List Reviews
 router.get('/meta/:id', async (req, res) => {
-  const reviews = await reviewController.getReviews(req, res);
-  res.send(reviews);
   //parameters: page, count, sort, product_id
+  reviewController.getReviews(req, res);
 });
 
 // Get Review Metadata
 router.get('/:id', (req, res) => {
+  // parameters: product_id
   res.status(200);
   res.send('Metadata Hit');
-  // parameters: product_id
 })
 
 // Add a Review
 router.post('/', async (req, res) => {
-  const postReview = await reviewController.postReview(req, res);
-  res.send(postReview);
-  // res.status(201);
-  // res.send('Reviews index post request hit');
   // parameters: product_id, rating, summary, body, recommend, name, email, photos, characteristics
+  reviewController.postReview(req, res);
 });
 
 // Mark Review as Helpful
 router.put('/:review_id/helpful', (req, res) => {
-  res.status(204);
-  res.send('Helpful review put request hit');
-  //parameter: review_id
+  reviewController.markHelpful(req, res);
 });
 
 // Report Review
 router.put('/:review_id/report', (req, res) => {
-  res.status(204);
-  res.send('Hit report review');
+  reviewController.reportReview(req, res);
 });
 
 
