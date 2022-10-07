@@ -1,9 +1,12 @@
 const ReviewModel = require('../models/reviewModel');
 
 exports.getReviews = async (req, res) => {
-  console.log('HIT CONTROLLER GET REVIEWS');
   const reviews = await ReviewModel.getReviews(req.params.id);
-  return reviews;
+  if (reviews !== 422) {
+    res.status(200).send(reviews);
+  } else {
+    res.status(422).send('Unprocessable Entity');
+  }
 };
 
 exports.getMetaData = async (req, res) => {
@@ -13,16 +16,26 @@ exports.getMetaData = async (req, res) => {
 
 exports.postReview = async (req, res) => {
   const postStatus = await ReviewModel.postReview(req.body);
-  return postStatus;
+  if (postStatus === 201) {
+    res.status(201).send('CREATED');
+  };
 };
 
 exports.markHelpful = async (req, res) => {
-  const markStatus = await ReviewModel.markHelpful();
-  return markStatus;
+  const markStatus = await ReviewModel.markHelpful(req.params.review_id);
+  if (markStatus === 204) {
+    res.status(204).send('No Content');
+  } else {
+    res.status(500).send('An error occurred. If this persists, contact your instruction team.');
+  }
 };
 
 exports.reportReview = async (req, res) => {
-  const reportStatus = await ReviewModel.reportReview();
-  return reportStatus;
+  const reportStatus = await ReviewModel.reportReview(req.params.review_id);
+  if (reportStatus === 204) {
+    res.status(204).send('No Content');
+  } else {
+    res.status(404).send('Not Found');
+  }
 };
 

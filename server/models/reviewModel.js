@@ -1,34 +1,40 @@
 const { pool } = require('../db');
 
 exports.getReviews = async (prodId) => {
-  const text = 'SELECT * FROM reviews WHERE product_id = $1';
-  const values = [prodId];
-  console.log('START POSTGRES QUERY');
-  const result = await pool.query(text, values);
+  try {
+    const text = 'SELECT * FROM reviews WHERE product_id = $1';
+    const values = [prodId];
+    const result = await pool.query(text, values);
 
-  // Shape Data in result.rows
-  const shapedData = await Promise.all(result.rows.map(async (current) => {
-    // query to add photo data
-    const text = 'SELECT id, url FROM photos WHERE review_id = $1';
-    const values = [current.review_id];
-    const photoQuery = await pool.query(text, values);
-    delete current.product_id;
-    delete current.reported;
-    delete current.reviewer_email;
-    delete current.product_id;
-    current.photos = photoQuery.rows;
-    return current;
-  }));
+    // Remove reported reviews
+    const filteredResults = result.rows.filter((current) => {
+      return (!current.reported)
+    })
 
+    // Shape Data in result.rows
+    const shapedData = await Promise.all(filteredResults.map(async (current) => {
+      // query to add photo data
+      const text = 'SELECT id, url FROM photos WHERE review_id = $1';
+      const values = [current.review_id];
+      const photoQuery = await pool.query(text, values);
+      delete current.product_id;
+      delete current.reported;
+      delete current.reviewer_email;
+      delete current.product_id;
+      current.photos = photoQuery.rows;
+      return current;
+    }));
+    return {
+      product: prodId,
+      page: 0,
+      count: 5,
+      results: shapedData
+      }
+  } catch (error) {
+    console.error(error);
+    return 422;
+  }
   await pool.end();
-
-  // need to do something with returning default reponses for page and count
-  return {
-    product: prodId,
-    page: 0,
-    count: 5,
-    results: shapedData
-    }
 };
 
 exports.getMetaData = async () => {
@@ -59,10 +65,6 @@ exports.postReview = async (post) => {
     // Begin transaction
     await pool.query('BEGIN');
 
-    // Failing test statement
-    // INSERT INTO reviews (product_id, rating, recommend, summary, body, reviewer_name, reviewer_email) VALUES (71701, 0, true, 'Test Title', 'Test Body', 'Tester Nickname', 'Tester@gmail.com') RETURNING review_id;
-
-
     // Insert Review
     const textReviews = 'INSERT INTO reviews (product_id, rating, recommend, summary, body, reviewer_name, reviewer_email) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING review_id';
     const reviewsValues = [product_id, rating, recommend, summary, body, name, email];
@@ -75,38 +77,60 @@ exports.postReview = async (post) => {
     const textPhotos = 'INSERT INTO photos (url, review_id) VALUES ($1, $2) RETURNING id';
     const insertPhotos = await Promise.all(photoArr.map(async (current, index) => {
       const photosValues = [current, insertReview.rows[0].review_id];
-      await pool.query(textPhotos, photosValues);
+      return pool.query(textPhotos, photosValues);
     }));
-    // Insert Characteristics
-    console.log('HIT CHARACTERISTICS');
+
+    // Testing for review_id being present in reviews table
+    console.log('HIT TEST');
     const testReviewID = 'SELECT * FROM reviews WHERE review_id = $1';
     const testValues = [insertReview.rows[0].review_id];
     // will return review_id
     const testReview = await pool.query(testReviewID, testValues);
     console.log('TEST REVIEW', testReview.rows);
 
+    // Insert Characteristics
     const charReviewArr = Object.keys(characteristics);
+    console.log('HIT CHARACTERISTIC');
     const textCharReview = 'INSERT INTO characteristic_reviews (characteristic_id, review_id, value) VALUES ($1, $2, $3)'
     const insertCharReview = await Promise.all(charReviewArr.map(async (currCharId) => {
       const charReviewValues = [Number(currCharId), insertReview.rows[0].review_id, characteristics[currCharId]];
+      console.log('CHAR REVIEW', charReviewValues);
       await pool.query(textCharReview, charReviewValues);
     }));
 
 
     // End transaction
     await pool.query('COMMIT');
-    await pool.end();
     return 'Successful Post Request';
   } catch (error) {
     console.error(error);
     return 404;
   }
+  await pool.end();
 };
 
-exports.markHelpful = async () => {
-
+exports.markHelpful = async (review_id) => {
+  try {
+    const text = 'UPDATE reviews SET helpfulness = helpfulness + 1 WHERE review_id = $1'
+    const values = [review_id]
+    const updateHelpfulness = await pool.query(text, values);
+    return 204;
+  } catch (error) {
+    console.error(error);
+    return 500;
+  }
+  await pool.end();
 };
 
-exports.reportReview = async () => {
-
+exports.reportReview = async (review_id) => {
+  try {
+    const text = 'UPDATE reviews SET reported = true WHERE review_id = $1';
+    const values = [review_id]
+    const updateReported = await pool.query(text, values);
+    return 204;
+  } catch (error) {
+    console.error(error);
+    return 404;
+  }
+  await pool.end();
 };
