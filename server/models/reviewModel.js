@@ -17,10 +17,11 @@ exports.getReviews = async (req) => {
     })
 
     // Shape return data
-    const shapedData = await Promise.all(filteredResults.map(async (current) => {
+    let shapedData = await Promise.all(filteredResults.map(async (current) => {
       // query to add photo data
       const text = 'SELECT id, url FROM photos WHERE review_id = $1';
       const values = [current.review_id];
+      current.date = new Date(Number(current.date));
       const photoQuery = await pool.query(text, values);
       delete current.product_id;
       delete current.reported;
@@ -31,10 +32,27 @@ exports.getReviews = async (req) => {
     }));
 
     // Sort
-
+    if (sort === 'recent') {
+      shapedData.sort((a, b) => {
+        return b.date.getTime() - a.date.getTime();
+      });
+    }
+    if (sort === 'helpful') {
+      shapedData.sort((a, b) => {
+        return b.helpfulness - a.helpfulness;
+      });
+    } else {
+      // sort helpfulness at top then by date
+      shapedData.sort((a, b) => {
+        return b.date.getTime() - a.date.getTime();
+      });
+      shapedData.sort((a, b) => {
+        return b.helpfulness - a.helpfulness;
+      });
+    }
 
     // Page and Count
-    const sizedData = shapedData.filter((current, index) => {
+    let sizedData = shapedData.filter((current, index) => {
       const endIndex = count * page;
       const startIndex = endIndex - count;
       return index >= startIndex && index < endIndex;
