@@ -78,10 +78,12 @@ exports.getMetaData = async (prod_id) => {
 }
 */
 exports.postReview = async (post) => {
+  const client = await pool.connect();
   try {
-    const { product_id, rating, recommend, summary, body, name, email, photos, characteristics } = post;
     // Begin transaction
-    // await pool.query('BEGIN');
+    await client.query('BEGIN');
+
+    const { product_id, rating, recommend, summary, body, name, email, photos, characteristics } = post;
 
     // Insert Review
     const textReviews = 'INSERT INTO reviews (product_id, rating, recommend, summary, body, reviewer_name, reviewer_email) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING review_id';
@@ -89,7 +91,6 @@ exports.postReview = async (post) => {
     // will return review_id
     const insertReview = await pool.query(textReviews, reviewsValues);
     const returnedReview_id = insertReview.rows[0].review_id;
-    console.log('REVIEW ID', returnedReview_id);
 
     // Insert Photos
     const photoArr = photos;
@@ -99,33 +100,22 @@ exports.postReview = async (post) => {
       return pool.query(textPhotos, photosValues);
     }));
 
-    // Testing for review_id being present in reviews table
-    console.log('HIT TEST');
-    const testReviewID = 'SELECT * FROM reviews WHERE review_id = $1';
-    const testValues = [returnedReview_id];
-    // will return review_id
-    const testReview = await pool.query(testReviewID, testValues);
-    console.log('TEST REVIEW', testReview.rows);
-
     // Insert Characteristics
     const charReviewArr = Object.keys(characteristics);
-    console.log('HIT CHARACTERISTIC');
     const textCharReview = 'INSERT INTO characteristic_reviews (characteristic_id, review_id, value) VALUES ($1, $2, $3)'
     await Promise.all(charReviewArr.map(async (currCharId) => {
       const charReviewValues = [Number(currCharId), returnedReview_id, characteristics[currCharId]];
-      console.log('CHAR REVIEW', charReviewValues);
       await pool.query(textCharReview, charReviewValues);
     }));
 
-
     // End transaction
-    // await pool.query('COMMIT');
+    await client.query('COMMIT');
     return 201;
   } catch (error) {
     console.error(error);
-    return 404;
+    return 422;
   }
-  await pool.end();
+  await client.release();
 };
 
 
