@@ -1,7 +1,7 @@
 const ReviewModel = require('../models/reviewModel');
 
 exports.getReviews = async (req, res) => {
-  const reviews = await ReviewModel.getReviews(req.params.id);
+  const reviews = await ReviewModel.getReviews(req);
   if (reviews !== 422) {
     res.status(200).send(reviews);
   } else {

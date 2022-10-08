@@ -1,9 +1,14 @@
 const { pool } = require('../db');
 
-exports.getReviews = async (prodId) => {
+// need to format date
+exports.getReviews = async (req) => {
+  const page = req.query.page || 1;
+  const count = req.query.count || 5;
+  const sort = req.query.sort || 'relevant';
+  const id = req.params.id;
   try {
     const text = 'SELECT * FROM reviews WHERE product_id = $1';
-    const values = [prodId];
+    const values = [id];
     const result = await pool.query(text, values);
 
     // Remove reported reviews
@@ -24,11 +29,22 @@ exports.getReviews = async (prodId) => {
       current.photos = photoQuery.rows;
       return current;
     }));
+
+    // Sort
+
+
+    // Page and Count
+    const sizedData = shapedData.filter((current, index) => {
+      const endIndex = count * page;
+      const startIndex = endIndex - count;
+      return index >= startIndex && index < endIndex;
+    });
+
     return {
-      product: prodId,
-      page: 0,
-      count: 5,
-      results: shapedData
+      product: id,
+      page: page,
+      count: count,
+      results: sizedData
       }
   } catch (error) {
     console.error(error);
