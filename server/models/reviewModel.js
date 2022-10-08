@@ -41,15 +41,59 @@ exports.getReviews = async (prodId) => {
 
 exports.getMetaData = async (prod_id) => {
   try {
-    // ratings
-    const textRating = 'SELECT rating FROM reviews WHERE review_id = $1';
-    const valueRatings = [prod_id];
-    const getRatings = await pool.query(textRating, valueRatings);
-    console.log('GET RATINGS', getRatings);
-    // recommend
+    const text = 'SELECT rating, recommend FROM reviews WHERE product_id = $1';
+    const values = [prod_id];
+    const getRatingRecommended = await pool.query(text, values);
+    const ratingRecommendedValues = getRatingRecommended.rows;
+
+    // ratings and recommended
+    let ratingObj = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+    let recommendedObj = {true: 0, false: 0};
+    ratingRecommendedValues.forEach(current => {
+      ratingObj[current.rating]++;
+      recommendedObj[current.recommend]++;
+    });
+    for (var key in ratingObj) {
+      ratingObj[key] = ratingObj[key].toString();
+    }
+    for (var key in recommendedObj) {
+      recommendedObj[key] = recommendedObj[key].toString();
+    }
 
     // characteristics
+    const textChar = 'SELECT characteristic_id, name, value FROM characteristics c INNER JOIN characteristic_reviews r ON c.id = r.characteristic_id WHERE product_id = $1'
+    const valuesChar = [prod_id];
+    const getCharacteristics = await pool.query(textChar, valuesChar);
+    const characteristicValues = getCharacteristics.rows;
+    let charObj = {};
+    // shape characteristics
+    const transformChar = characteristicValues.forEach(current => {
+      if (!charObj[current.name]) {
+        charObj[current.name] = {
+          id: current.characteristic_id,
+          value: [current.value]
+        }
+      } else {
+        charObj[current.name].value.push(current.value);
+      }
+    });
+    // calculate characteristic value average
+    for (var key in charObj) {
+      let arrLength = charObj[key].value.length;
+      let total = charObj[key].value.reduce((acc, current) => {
+        return acc + current;
+      }, 0);
+      let average = total / arrLength;
+      charObj[key].value = average.toString();
+    }
 
+    let finalShape = {
+      product_id: prod_id,
+      ratings: ratingObj,
+      recommended: recommendedObj,
+      characteristics: charObj,
+    };
+    return finalShape;
   } catch (error) {
     console.error(error);
     return 500;
@@ -89,7 +133,7 @@ exports.postReview = async (post) => {
     const textReviews = 'INSERT INTO reviews (product_id, rating, recommend, summary, body, reviewer_name, reviewer_email) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING review_id';
     const reviewsValues = [product_id, rating, recommend, summary, body, name, email];
     // will return review_id
-    const insertReview = await pool.query(textReviews, reviewsValues);
+    const insertReview = await client.query(textReviews, reviewsValues);
     const returnedReview_id = insertReview.rows[0].review_id;
 
     // Insert Photos
@@ -97,7 +141,7 @@ exports.postReview = async (post) => {
     const textPhotos = 'INSERT INTO photos (url, review_id) VALUES ($1, $2) RETURNING id';
     await Promise.all(photoArr.map(async (current, index) => {
       const photosValues = [current,returnedReview_id];
-      return pool.query(textPhotos, photosValues);
+      return client.query(textPhotos, photosValues);
     }));
 
     // Insert Characteristics
@@ -105,7 +149,7 @@ exports.postReview = async (post) => {
     const textCharReview = 'INSERT INTO characteristic_reviews (characteristic_id, review_id, value) VALUES ($1, $2, $3)'
     await Promise.all(charReviewArr.map(async (currCharId) => {
       const charReviewValues = [Number(currCharId), returnedReview_id, characteristics[currCharId]];
-      await pool.query(textCharReview, charReviewValues);
+      await client.query(textCharReview, charReviewValues);
     }));
 
     // End transaction
