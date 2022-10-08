@@ -10,6 +10,7 @@ const credentials = {
 };
 
 const pool = new Pool(credentials);
+const client = new Pool(credentials);
 
 const connectDb = async () => {
   try {
@@ -22,7 +23,7 @@ const connectDb = async () => {
   }
 }
 
-module.exports = { pool, connectDb };
+module.exports = { pool, client, connectDb };
 
 
 
