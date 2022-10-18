@@ -23,7 +23,7 @@ describe("List Reviews", () => {
     await request(app)
       .get("/reviews/meta/2")
       .expect(200);
-  }, 10000);
+  }, 15000);
 
   test("should get review metadata", async () => {
     await request(app)
