@@ -1,7 +1,9 @@
 const { pool } = require('../db');
+const { performance } = require('node:perf_hooks');
 
 // need to format date
 exports.getReviews = async (req) => {
+  const startTime = performance.now();
   const page = req.query.page || 1;
   const count = req.query.count || 5;
   const sort = req.query.sort || 'relevant';
@@ -57,6 +59,8 @@ exports.getReviews = async (req) => {
       const startIndex = endIndex - count;
       return index >= startIndex && index < endIndex;
     });
+    const endTime = performance.now();
+    // console.log(`Call to GET REVIEWS took ${startTime - endTime} milliseconds.`);
 
     return {
       product: id,
@@ -74,6 +78,7 @@ exports.getReviews = async (req) => {
 
 
 exports.getMetaData = async (prod_id) => {
+  const startTime = performance.now();
   try {
     const text = 'SELECT rating, recommend FROM reviews WHERE product_id = $1';
     const values = [prod_id];
@@ -127,6 +132,8 @@ exports.getMetaData = async (prod_id) => {
       recommended: recommendedObj,
       characteristics: charObj,
     };
+    const endTime = performance.now();
+    console.log(`Call to GET REVIEWS took ${startTime - endTime} milliseconds.`);
     return finalShape;
   } catch (error) {
     console.error(error);
@@ -135,26 +142,6 @@ exports.getMetaData = async (prod_id) => {
   await pool.end();
 };
 
-
-
-/* Review Post Shape
-{
-  "product_id": 71701,
-  "rating": 0,
-  "recommend": true,
-  "summary": "Test Title",
-  "body": "Test Body Review",
-  "name": "Tester Nickname",
-  "email": "Tester@gmail.com",
-  "photos": ["https://www.google.com/url?sa=i&url=https%3A%2F%2Fsienaconstruction.com%2Ftest-image%2F&psig=AOvVaw3TPNMh90NX08BCjWfry54V&ust=1664938829180000&source=images&cd=vfe&ved=0CAsQjRxqFwoTCMDMos3KxfoCFQAAAAAdAAAAABAE"],
-  "characteristics": {
-      "240595": 1,
-      "240596": 2,
-      "240597": 2,
-      "240598": 3
-  }
-}
-*/
 exports.postReview = async (post) => {
   const client = await pool.connect();
   try {
