@@ -6,7 +6,8 @@
   "scripts": {
     "server": "nodemon server/index.js --watch",
     "test": "jest --coverage",
-    "debug": "ndb ./server/index.js"
+    "debug": "ndb ./server/index.js",
+    "stress-test": "k6 run script.js"
   },
   "repository": {
     "type": "git",

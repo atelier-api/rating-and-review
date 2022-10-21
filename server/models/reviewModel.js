@@ -60,7 +60,7 @@ exports.getReviews = async (req) => {
       return index >= startIndex && index < endIndex;
     });
     const endTime = performance.now();
-    // console.log(`Call to GET REVIEWS took ${startTime - endTime} milliseconds.`);
+    console.log(`Call to GET REVIEWS took ${startTime - endTime} milliseconds.`);
 
     return {
       product: id,
@@ -133,7 +133,7 @@ exports.getMetaData = async (prod_id) => {
       characteristics: charObj,
     };
     const endTime = performance.now();
-    console.log(`Call to GET REVIEWS took ${startTime - endTime} milliseconds.`);
+    console.log(`Call to GET METADATA took ${startTime - endTime} milliseconds.`);
     return finalShape;
   } catch (error) {
     console.error(error);
