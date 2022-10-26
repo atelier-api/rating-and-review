@@ -1,66 +1,53 @@
 const { pool } = require('../db');
 const { performance } = require('node:perf_hooks');
 
-// need to format date
 exports.getReviews = async (req) => {
   const startTime = performance.now();
   const page = req.query.page || 1;
   const count = req.query.count || 5;
   const sort = req.query.sort || 'relevant';
   const id = req.params.id;
+
   try {
-    const text = 'SELECT * FROM reviews WHERE product_id = $1';
+    const text = `SELECT r.review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, json_agg(json_build_object('id', p.id, 'url', p.url)) FILTER (WHERE p.id IS NOT null) AS photos FROM reviews r LEFT JOIN photos p ON r.review_id = p.review_id WHERE product_id = $1 AND reported = false GROUP BY r.review_id`;
     const values = [id];
     const result = await pool.query(text, values);
 
-    // Remove reported reviews
-    const filteredResults = result.rows.filter((current) => {
-      return (!current.reported)
-    })
-
-    // Shape return data
-    let shapedData = await Promise.all(filteredResults.map(async (current) => {
-      // query to add photo data
-      const text = 'SELECT id, url FROM photos WHERE review_id = $1';
-      const values = [current.review_id];
+    // Made date readable
+    const resultWithDate = result.rows.map(current => {
       current.date = new Date(Number(current.date));
-      const photoQuery = await pool.query(text, values);
-      delete current.product_id;
-      delete current.reported;
-      delete current.reviewer_email;
-      delete current.product_id;
-      current.photos = photoQuery.rows;
+      if (current.photos === null) {
+        current.photos = [];
+      }
       return current;
-    }));
+    });
 
-    // Sort
+    // Sort Data
     if (sort === 'recent') {
-      shapedData.sort((a, b) => {
+      resultWithDate.sort((a, b) => {
         return b.date.getTime() - a.date.getTime();
       });
     }
     if (sort === 'helpful') {
-      shapedData.sort((a, b) => {
+      resultWithDate.sort((a, b) => {
         return b.helpfulness - a.helpfulness;
       });
     } else {
       // sort helpfulness at top then by date
-      shapedData.sort((a, b) => {
+      resultWithDate.sort((a, b) => {
         return b.date.getTime() - a.date.getTime();
       });
-      shapedData.sort((a, b) => {
+      resultWithDate.sort((a, b) => {
         return b.helpfulness - a.helpfulness;
       });
     }
 
-    // Page and Count
-    let sizedData = shapedData.filter((current, index) => {
+     // Page and Count
+     let sizedData = resultWithDate.filter((current, index) => {
       const endIndex = count * page;
       const startIndex = endIndex - count;
       return index >= startIndex && index < endIndex;
     });
-    const endTime = performance.now();
-    console.log(`Call to GET REVIEWS took ${startTime - endTime} milliseconds.`);
 
     return {
       product: id,
@@ -92,6 +79,7 @@ exports.getMetaData = async (prod_id) => {
       ratingObj[current.rating]++;
       recommendedObj[current.recommend]++;
     });
+    // format obj values to strings
     for (var key in ratingObj) {
       ratingObj[key] = ratingObj[key].toString();
     }
