@@ -67,62 +67,47 @@ exports.getReviews = async (req) => {
 exports.getMetaData = async (prod_id) => {
   const startTime = performance.now();
   try {
-    const text = 'SELECT rating, recommend FROM reviews WHERE product_id = $1';
+    // Rating and Review Query
+    // 'SELECT json_object_agg(rating, count_rating) AS ratings, json_object_agg(recommend, count_recommend) AS recommended FROM (SELECT rating, COUNT(rating) AS count_rating, recommend, COUNT(recommend) AS count_recommend FROM reviews WHERE product_id = $1 GROUP BY rating, recommend) AS foo';
+
+    // Characteristic Query
+    // `SELECT json_object_agg(name, charObj) AS characteristics FROM (SELECT name, json_build_object('id', c.id, 'value', AVG(r.value)) AS charObj FROM characteristics c INNER JOIN characteristic_reviews r ON c.id = r.characteristic_id WHERE product_id = $1 GROUP BY c.name, c.id) AS boo;`
+
+
+    const text = `SELECT product_id, json_object_agg(rating, count_rating) AS ratings, json_object_agg(recommend, count_recommend) AS recommended, json_object_agg(name, charObj) AS characteristics FROM (SELECT c.product_id AS product_id, rating, COUNT(rating) AS count_rating, recommend, COUNT(recommend) AS count_recommend, name, json_build_object('id', c.id, 'value', AVG(r.value)) AS charObj FROM reviews INNER JOIN characteristic_reviews r ON reviews.review_id = r.review_id INNER JOIN characteristics c ON c.id = r.characteristic_id WHERE c.product_id = $1 GROUP BY rating, recommend, c.name, c.id) AS foo GROUP BY product_id`
+
     const values = [prod_id];
     const getRatingRecommended = await pool.query(text, values);
-    const ratingRecommendedValues = getRatingRecommended.rows;
+    const ratingRecommendedValues = getRatingRecommended.rows[0];
 
-    // ratings and recommended
-    let ratingObj = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
-    let recommendedObj = {true: 0, false: 0};
-    ratingRecommendedValues.forEach(current => {
-      ratingObj[current.rating]++;
-      recommendedObj[current.recommend]++;
-    });
-    // format obj values to strings
-    for (var key in ratingObj) {
-      ratingObj[key] = ratingObj[key].toString();
+    // Add missing ratings
+    if (!ratingRecommendedValues.ratings[1]) {
+      ratingRecommendedValues.ratings[1] = 0;
     }
-    for (var key in recommendedObj) {
-      recommendedObj[key] = recommendedObj[key].toString();
+    if (!ratingRecommendedValues.ratings[2]) {
+      ratingRecommendedValues.ratings[2] = 0;
     }
-
-    // characteristics
-    const textChar = 'SELECT characteristic_id, name, value FROM characteristics c INNER JOIN characteristic_reviews r ON c.id = r.characteristic_id WHERE product_id = $1'
-    const valuesChar = [prod_id];
-    const getCharacteristics = await pool.query(textChar, valuesChar);
-    const characteristicValues = getCharacteristics.rows;
-    let charObj = {};
-    // shape characteristics
-    const transformChar = characteristicValues.forEach(current => {
-      if (!charObj[current.name]) {
-        charObj[current.name] = {
-          id: current.characteristic_id,
-          value: [current.value]
-        }
-      } else {
-        charObj[current.name].value.push(current.value);
-      }
-    });
-    // calculate characteristic value average
-    for (var key in charObj) {
-      let arrLength = charObj[key].value.length;
-      let total = charObj[key].value.reduce((acc, current) => {
-        return acc + current;
-      }, 0);
-      let average = total / arrLength;
-      charObj[key].value = average.toString();
+    if (!ratingRecommendedValues.ratings[3]) {
+      ratingRecommendedValues.ratings[3] = 0;
+    }
+    if (!ratingRecommendedValues.ratings[4]) {
+      ratingRecommendedValues.ratings[4] = 0;
+    }
+    if (!ratingRecommendedValues.ratings[5]) {
+      ratingRecommendedValues.ratings[5] = 0;
+    }
+    // Add missing true or false
+    if (!ratingRecommendedValues.recommended.true) {
+      ratingRecommendedValues.recommended.true = 0;
+    }
+    if (!ratingRecommendedValues.recommended.false) {
+      ratingRecommendedValues.recommended.false = 0;
     }
 
-    let finalShape = {
-      product_id: prod_id,
-      ratings: ratingObj,
-      recommended: recommendedObj,
-      characteristics: charObj,
-    };
+
     const endTime = performance.now();
     console.log(`Call to GET METADATA took ${startTime - endTime} milliseconds.`);
-    return finalShape;
+    return ratingRecommendedValues;
   } catch (error) {
     console.error(error);
     return 500;
