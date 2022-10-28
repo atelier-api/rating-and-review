@@ -49,6 +49,8 @@ exports.getReviews = async (req) => {
       return index >= startIndex && index < endIndex;
     });
 
+    const endTime = performance.now();
+    console.log(`Call to GET REVIEWS took ${startTime - endTime} milliseconds.`);
     return {
       product: id,
       page: page,
@@ -73,7 +75,7 @@ exports.getMetaData = async (prod_id) => {
     // Characteristic Query
     // `SELECT json_object_agg(name, charObj) AS characteristics FROM (SELECT name, json_build_object('id', c.id, 'value', AVG(r.value)) AS charObj FROM characteristics c INNER JOIN characteristic_reviews r ON c.id = r.characteristic_id WHERE product_id = $1 GROUP BY c.name, c.id) AS boo;`
 
-
+    // Combined Query
     const text = `SELECT product_id, json_object_agg(rating, count_rating) AS ratings, json_object_agg(recommend, count_recommend) AS recommended, json_object_agg(name, charObj) AS characteristics FROM (SELECT c.product_id AS product_id, rating, COUNT(rating) AS count_rating, recommend, COUNT(recommend) AS count_recommend, name, json_build_object('id', c.id, 'value', AVG(r.value)) AS charObj FROM reviews INNER JOIN characteristic_reviews r ON reviews.review_id = r.review_id INNER JOIN characteristics c ON c.id = r.characteristic_id WHERE c.product_id = $1 GROUP BY rating, recommend, c.name, c.id) AS foo GROUP BY product_id`
 
     const values = [prod_id];
