@@ -7,3 +7,5 @@ data/
 *.pem
 
 *.pgsql
+
+.git_bk
