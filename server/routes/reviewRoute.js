@@ -1,42 +1,31 @@
 const express = require('express');
 const router = express.Router();
-
-// Include middleware if needed
-
-// Will designate which controller function for each route
+const reviewController = require('../controllers/reviewController');
 
 // List Reviews
-router.get('/', (req, res) => {
-  res.status(200);
-  res.send('Reviews Index Hit!');
+router.get('/meta/:id/', async (req, res) => {
   //parameters: page, count, sort, product_id
+  reviewController.getReviews(req, res);
 });
 
 // Get Review Metadata
-router.get('/meta', (req, res) => {
-  res.status(200);
-  res.send('Metadata Hit');
-  // parameters: product_id
+router.get('/:id/', (req, res) => {
+  reviewController.getMetaData(req, res);
 })
 
 // Add a Review
-router.post('/', (req, res) => {
-  res.status(201);
-  res.send('Reviews index post request hit');
-  // parameters: product_id, rating, summary, body, recommend, name, email, photos, characteristics
+router.post('/', async (req, res) => {
+  reviewController.postReview(req, res);
 });
 
 // Mark Review as Helpful
-router.put('/:review_id/helpful', (req, res) => {
-  res.status(204);
-  res.send('Helpful review put request hit');
-  //parameter: review_id
+router.put('/:review_id/helpful/', (req, res) => {
+  reviewController.markHelpful(req, res);
 });
 
 // Report Review
-router.put('/:review_id/report', (req, res) => {
-  res.status(204);
-  res.send('Hit report review');
+router.put('/:review_id/report/', (req, res) => {
+  reviewController.reportReview(req, res);
 });
 
 

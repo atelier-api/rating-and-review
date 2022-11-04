@@ -1,0 +1,1 @@
+ssh -i "/Users/dukeromkey/Coding/hackreactor2022/rpp2204/rating-and-review/SDC_Review_DB.pem" ubuntu@ec2-18-208-138-46.compute-1.amazonaws.com
