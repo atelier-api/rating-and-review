@@ -80,37 +80,47 @@ exports.getMetaData = async (prod_id) => {
 
     const values = [prod_id];
     const getRatingRecommended = await pool.query(text, values);
-    const ratingRecommendedValues = getRatingRecommended.rows[0];
 
     // Add missing ratings
-    if (!ratingRecommendedValues.ratings[1]) {
-      ratingRecommendedValues.ratings[1] = 0;
+    if (!getRatingRecommended.rows[0]) {
+      const endTime = performance.now();
+      console.log(`Call to GET METADATA took ${startTime - endTime} milliseconds.`);
+      return {
+        product_id: prod_id,
+        ratings: {},
+        recommended: {},
+        characteristics: {}
+      };
+    } else {
+      const ratingRecommendedValues = getRatingRecommended.rows[0];
+      if (!ratingRecommendedValues.ratings[1]) {
+        ratingRecommendedValues.ratings[1] = 0;
+      }
+      if (!ratingRecommendedValues.ratings[2]) {
+        ratingRecommendedValues.ratings[2] = 0;
+      }
+      if (!ratingRecommendedValues.ratings[3]) {
+        ratingRecommendedValues.ratings[3] = 0;
+      }
+      if (!ratingRecommendedValues.ratings[4]) {
+        ratingRecommendedValues.ratings[4] = 0;
+      }
+      if (!ratingRecommendedValues.ratings[5]) {
+        ratingRecommendedValues.ratings[5] = 0;
+      }
+      // Add missing true or false
+      if (!ratingRecommendedValues.recommended.true) {
+        ratingRecommendedValues.recommended.true = 0;
+      }
+      if (!ratingRecommendedValues.recommended.false) {
+        ratingRecommendedValues.recommended.false = 0;
+      }
+      const endTime = performance.now();
+      console.log(`Call to GET METADATA took ${startTime - endTime} milliseconds.`);
+      return ratingRecommendedValues;
     }
-    if (!ratingRecommendedValues.ratings[2]) {
-      ratingRecommendedValues.ratings[2] = 0;
-    }
-    if (!ratingRecommendedValues.ratings[3]) {
-      ratingRecommendedValues.ratings[3] = 0;
-    }
-    if (!ratingRecommendedValues.ratings[4]) {
-      ratingRecommendedValues.ratings[4] = 0;
-    }
-    if (!ratingRecommendedValues.ratings[5]) {
-      ratingRecommendedValues.ratings[5] = 0;
-    }
-    // Add missing true or false
-    if (!ratingRecommendedValues.recommended.true) {
-      ratingRecommendedValues.recommended.true = 0;
-    }
-    if (!ratingRecommendedValues.recommended.false) {
-      ratingRecommendedValues.recommended.false = 0;
-    }
-
-
-    const endTime = performance.now();
-    console.log(`Call to GET METADATA took ${startTime - endTime} milliseconds.`);
-    return ratingRecommendedValues;
   } catch (error) {
+    console.log('FAILING PRODUCT ID: ', prod_id);
     console.error(error);
     return 500;
   }
