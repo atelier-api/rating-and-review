@@ -12,3 +12,15 @@ K6, loader.io, and New Relic were used for stress testing and identification of 
 
 Deployed on Amazon EC2 instance with 3 servers and NGINX as a load balancer and configured for caching.
 
+<br>
+<div align="center">
+  <img src="Deployment Design.png" height="600px" />
+</div>
+
+# End Result
+
+Able to handle 3000 RPS with <10ms response time and <0.05% error rate when stress tested on deployed version. Database contained over 12 million records.
+
+# Author
+
+Built by Duke Romkey
